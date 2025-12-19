@@ -5,4 +5,4 @@ The XML files related to the texts in my corpus were downloaded from the **Perse
 The scripts used were created by Professor **Volker Gast**  
 The texts were parsed using **Stanza** (https://stanfordnlp.github.io/stanza/)  
 
-The file called _abl_abs_features_matched.xlsx_ shows an example of how I am working: once the texts have been parsed, the ablative absolutes identified by the automatic parsing (and later the cum + subjunctive / cum + ablative constructions) are placed into another Excel file, where they are checked manually.
+The files with an Excel extension contain the extracted features (of the ablative absolute or cum + subjunctive). They were analysed by marking in green the full ablative absolutes, in pink those occurrences in which a sentence contains more than one ablative absolute but they were split, and in red the errors.
