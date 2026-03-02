@@ -1,0 +1,6 @@
+pattern { A [ upos=VERB, Mood=Sub ];
+	  B [ upos=SCONJ, lemma="cum" ];
+	  A -> B;
+	  }
+
+

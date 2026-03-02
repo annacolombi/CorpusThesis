@@ -1,0 +1,99 @@
+import pandas as pd
+from google.colab import files
+
+# ============================
+# 1. TARGET SAMPLE SIZES
+# ============================
+
+sample_sizes = {
+    ("Bellum Iugurthinum", "AA"): 13,
+    ("Bellum Iugurthinum", "CUM"): 10,
+    ("Epistulae ad familiares", "AA"): 15,
+    ("Epistulae ad familiares", "CUM"): 23,
+    ("De Bello Civili", "AA"): 24,
+    ("De Bello Civili", "CUM"): 11,
+    ("De Bello Gallico", "AA"): 37,
+    ("De Bello Gallico", "CUM"): 27,
+}
+
+# ============================
+# 2. DETECT WORK FROM FILENAME (robust & correct)
+# ============================
+
+def detect_work_from_filename(filename):
+    name = filename.lower()
+
+    # Bellum Iugurthinum → only if iug or lug
+    if "iug" in name or "lug" in name:
+        return "Bellum Iugurthinum"
+
+    # De Bello Gallico → only if gallic
+    if "gallic" in name:
+        return "De Bello Gallico"
+
+    # De Bello Civili → contains civ but NOT gallic
+    if "civ" in name:
+        return "De Bello Civili"
+
+    # Epistulae
+    if "ciceroepistulae" in name:
+        return "Epistulae ad familiares"
+
+    raise ValueError(f"Cannot detect work from filename: {filename}")
+
+# ============================
+# 3. DETECT CONSTRUCTION
+# ============================
+
+def detect_construction_from_filename(filename):
+    name = filename.lower()
+    if "abl" in name:
+        return "AA"
+    if "cum" in name:
+        return "CUM"
+    raise ValueError(f"Cannot detect construction from filename: {filename}")
+
+# ============================
+# 4. UPLOAD FILES
+# ============================
+
+uploaded = files.upload()
+excel_files = list(uploaded.keys())
+
+# ============================
+# 5. RANDOM SAMPLING
+# ============================
+
+samples = []
+
+for file in excel_files:
+
+    work = detect_work_from_filename(file)
+    construction = detect_construction_from_filename(file)
+
+    df = pd.read_excel(file, header=None)
+
+    # Column 2 contains the LATIN TEXT
+    df[2] = df[2].astype(str)
+    df = df[df[2].str.contains(" ")]
+
+    n = sample_sizes[(work, construction)]
+
+    sampled_df = df.sample(n=n, random_state=42).copy()
+    sampled_df["work"] = work
+    sampled_df["construction"] = construction
+    sampled_df = sampled_df.rename(columns={2: "sentence"})
+
+    samples.append(sampled_df[["sentence", "work", "construction"]])
+
+# ============================
+# 6. MERGE AND SAVE
+# ============================
+
+final_sample = pd.concat(samples, ignore_index=True)
+output_filename = "final_random_sample.xlsx"
+final_sample.to_excel(output_filename, index=False)
+
+files.download(output_filename)
+
+print("Done! File downloaded:", output_filename)

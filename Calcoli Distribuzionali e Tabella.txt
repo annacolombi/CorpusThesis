@@ -1,0 +1,127 @@
+# ============================
+# INSTALL PDF LIBRARY
+# ============================
+!pip install fpdf
+
+import pandas as pd
+import numpy as np
+from fpdf import FPDF
+from google.colab import files
+
+# ============================
+# 1. INITIAL DATA
+# ============================
+
+data = {
+    "work": [
+        "Bellum Iugurthinum", "Bellum Iugurthinum",
+        "Epistulae ad familiares", "Epistulae ad familiares",
+        "De Bello Civili", "De Bello Civili",
+        "De Bello Gallico", "De Bello Gallico"
+    ],
+    "construction": [
+        "AA", "CUM",
+        "AA", "CUM",
+        "AA", "CUM",
+        "AA", "CUM"
+    ],
+    "total_occurrences": [54, 16, 122, 189, 213, 91, 374, 270]
+}
+
+df = pd.DataFrame(data)
+
+# ============================
+# 2. SAMPLING PARAMETERS
+# ============================
+
+TARGET_SAMPLE = 160
+MIN_PER_DATASET = 10
+MIN_PERCENT_PER_WORK = 0.10   # 10%
+
+# ============================
+# 3. MINIMUM PER WORK
+# ============================
+
+work_totals = df.groupby("work")["total_occurrences"].sum()
+min_per_work = (work_totals * MIN_PERCENT_PER_WORK).round().astype(int)
+
+# ensure at least 10 per work
+min_per_work = min_per_work.apply(lambda x: max(x, 10))
+
+# normalise to reach the target sample size
+factor = TARGET_SAMPLE / min_per_work.sum()
+work_quotas = (min_per_work * factor).round().astype(int)
+
+# ============================
+# 4. DISTRIBUTION WITHIN EACH WORK
+# ============================
+
+df["work_total"] = df.groupby("work")["total_occurrences"].transform("sum")
+df["work_quota"] = df["work"].map(work_quotas)
+
+# internal proportions (AA vs CUM)
+df["internal_prop"] = df["total_occurrences"] / df["work_total"]
+
+# preliminary allocation
+df["sample"] = (df["internal_prop"] * df["work_quota"]).round().astype(int)
+
+# ============================
+# 5. ENFORCE MINIMUM PER DATASET
+# ============================
+
+def enforce_minimums(subdf):
+    diff = 0
+    for idx, row in subdf.iterrows():
+        if row["sample"] < MIN_PER_DATASET:
+            diff += MIN_PER_DATASET - row["sample"]
+            subdf.at[idx, "sample"] = MIN_PER_DATASET
+    # subtract surplus from the largest subset
+    if diff > 0:
+        idx_max = subdf["sample"].idxmax()
+        subdf.at[idx_max, "sample"] -= diff
+    return subdf
+
+df = df.groupby("work").apply(enforce_minimums).reset_index(drop=True)
+
+# ============================
+# 6. FINAL TABLE
+# ============================
+
+final_table = df[["work", "construction", "total_occurrences", "sample"]]
+
+print("\n===== FINAL SAMPLING TABLE =====\n")
+print(final_table.to_string(index=False))
+print("\nTotal sample size:", df["sample"].sum())
+
+# ============================
+# 7. EXPORT TO PDF
+# ============================
+
+pdf = FPDF()
+pdf.add_page()
+pdf.set_font("Arial", size=12)
+
+pdf.cell(200, 10, txt="Final Sampling Table", ln=True, align='C')
+pdf.ln(5)
+
+# header
+pdf.set_font("Arial", style="B", size=11)
+pdf.cell(60, 10, "Work", 1)
+pdf.cell(30, 10, "Construction", 1)
+pdf.cell(40, 10, "Total", 1)
+pdf.cell(40, 10, "Sample", 1)
+pdf.ln()
+
+# rows
+pdf.set_font("Arial", size=11)
+for _, row in final_table.iterrows():
+    pdf.cell(60, 10, row["work"], 1)
+    pdf.cell(30, 10, row["construction"], 1)
+    pdf.cell(40, 10, str(row["total_occurrences"]), 1)
+    pdf.cell(40, 10, str(row["sample"]), 1)
+    pdf.ln()
+
+filename = "sampling_table.pdf"
+pdf.output(filename)
+
+files.download(filename)

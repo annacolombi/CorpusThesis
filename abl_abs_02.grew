@@ -1,0 +1,10 @@
+pattern { A [ upos=VERB ];
+	  B [ upos=VERB, Case=Abl, VerbForm=Part ];
+	  C [ upos=NOUN, Case=Abl ];
+	  A -> B;
+	  A -> C;
+	  B.Number = C.Number;
+	  B.Gender = C.Gender;
+	  }
+
+
