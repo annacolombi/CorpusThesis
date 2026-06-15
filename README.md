@@ -5,6 +5,5 @@ The XML files related to the texts in my corpus were downloaded from the **Perse
 The scripts used were created by Professor **Volker Gast**  
 The texts were parsed using **Stanza** (https://stanfordnlp.github.io/stanza/)  
 
-The files with an Excel extension contain the extracted features (of the ablative absolute or cum + subjunctive). They were analysed by marking in green the full ablative absolutes, in pink those occurrences in which a sentence contains more than one ablative absolute but they were split, and in red the errors.
-
-In the colour‑coded guidelines document you will find the information needed to interpret the analysis.
+The files with an Excel extension contain the extracted features (of the ablative absolute or cum + subjunctive). They were analysed by marking in green the full ablative absolutes, in pink those occurrences in which a sentence contains more than one ablative absolute but they were split, and in red the errors. In the colour-coded guidelines document, you will find the information needed to interpret the raw text analysis. 
+In addition, all files related to each stage of the analysis are included, together with the corresponding scripts, including the script used to calculate the inter-annotator agreement.
